@@ -1,29 +1,30 @@
-const BACKEND_URL = "" // ИЗМЕНИТЬ НА АДРЕС БЕКЕНДА
+const BACKEND_URL = "http://0.0.0.0:8000" 
 
 const processImage = async () => {
     const fileInput = document.getElementById('imageInput');
     const image  = fileInput.files[0];
     const label  = document.getElementById('labelInput').value;
+    const maskPath = document.getElementById('maskPathInput').value;
     const width  = document.getElementById('widthInput').value;
     const height = document.getElementById('heightInput').value;
     const length = document.getElementById('lengthInput').value;
     
     const all = (arr, fn = Boolean) => arr.every(fn);
 
-    if (!all([image, label, width, height, length])) {
+    if (!all([image, maskPath, label, width, height, length])) {
         alert("Не указаны все данные!")
     } else {
         console.log(`Данные отправлены по адресу ${BACKEND_URL}.`)
-        await sendImageData(image, label, length, width, height)
+        await sendImageData(image, maskPath, label, length, width, height)
     }   
 }
 
-const sendImageData = async (image, label, length, width, height) => {
+const sendImageData = async (image, maskPath, label, length, width, height) => {
     showSpinner()
     await fetch(`${BACKEND_URL}/generate_image`, {
         method: 'POST',
         headers: { "Content-Type": "application/json" },
-        body: { image, label, length, width, height }
+        body: { image, maskPath, label, length, width, height }
     })
     .then(response => response.json())
     .then(data => showGeneratedImage(data))
