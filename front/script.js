@@ -1,8 +1,15 @@
 const BACKEND_URL = "http://0.0.0.0:8000" 
 
-const processImage = async () => {
+document.getElementById("imageForm").addEventListener('submit', e => {
+    e.preventDefault()
+    processImage(e);
+    return false;
+})
+
+const processImage = async (e) => {
+    e.preventDefault()
     const fileInput = document.getElementById('imageInput');
-    const image  = fileInput.files[0];
+    const image = fileInput.files[0];
     const label  = document.getElementById('labelInput').value;
     const maskPath = document.getElementById('maskPathInput').value;
     const width  = document.getElementById('widthInput').value;
@@ -15,22 +22,54 @@ const processImage = async () => {
         alert("Не указаны все данные!")
     } else {
         console.log(`Данные отправлены по адресу ${BACKEND_URL}.`)
-        await sendImageData(image, maskPath, label, length, width, height)
-    }   
-}
+        console.log(image)
+        showSpinner()
+        const formData = new FormData();
+        formData.append('img', image);
+        formData.append('mask_path', maskPath);
+        formData.append('product_category', label);
+    
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', `${BACKEND_URL}/process`, true);
+        xhr.responseType = 'blob'; // Указываем, что ожидаем в ответе бинарные данные (изображение)
 
-const sendImageData = async (image, maskPath, label, length, width, height) => {
-    showSpinner()
-    await fetch(`${BACKEND_URL}/generate_image`, {
-        method: 'POST',
-        headers: { "Content-Type": "application/json" },
-        body: { image, maskPath, label, length, width, height }
-    })
-    .then(response => response.json())
-    .then(data => showGeneratedImage(data))
-    .catch(error => {
-        console.error('Error:', error);
-    });
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var blob = xhr.response;
+                var imageUrl = URL.createObjectURL(blob);
+                const noGeneratedImagesFlag   = document.getElementById("noGeneratedImages")
+                const generationInProcessFlag = document.getElementById("generationInProcess")
+                const imageGeneratedFlag      = document.getElementById("imageGenerated")
+                const generatedImageSpinner   = document.getElementById("generatedImageSpinner")
+                const serverImage             = document.getElementById("serverImage")
+
+                // Hide unnecessary flags
+                noGeneratedImagesFlag.style.display   = "none"; 
+                generationInProcessFlag.style.display = "none"; 
+                generatedImageSpinner.style.display   = "none";
+
+                // Show actual blocks
+                imageGeneratedFlag.style.display = "block";
+                serverImage.style.display        = "block";
+
+                serverImage.src = imageUrl;
+            } 
+        };
+
+        xhr.send(formData);
+
+        // const response = await fetch(`${BACKEND_URL}/process`, {
+        //     method: 'POST',
+        //     body: formData
+        // })
+
+        // console.log(response)
+        // const imageData = await response.blob();
+        // const imageUrl = URL.createObjectURL(imageData);
+        // console.log(imageData)
+        // showGeneratedImage(imageData)
+    }   
+    return false;
 }
 
 const showImagePreview = () => {
@@ -38,6 +77,7 @@ const showImagePreview = () => {
     const file = fileInput.files[0];
     let reader = new FileReader();
     reader.onload = e => {
+        e.preventDefault();
         let preview = document.getElementById('imagePreview');
         preview.style.display = "block"
         preview.src = e.target.result;
@@ -46,10 +86,10 @@ const showImagePreview = () => {
 }
 
 const showSpinner = () => {
-    const noGeneratedImagesFlag = document.getElementById("noGeneratedImages")
+    const noGeneratedImagesFlag   = document.getElementById("noGeneratedImages")
     const generationInProcessFlag = document.getElementById("generationInProcess")
-    const imageGeneratedFlag = document.getElementById("imageGenerated")
-    const generatedImageSpinner = document.getElementById("generatedImageSpinner")
+    const imageGeneratedFlag      = document.getElementById("imageGenerated")
+    const generatedImageSpinner   = document.getElementById("generatedImageSpinner")
 
     // Hide unnecessary flags
     noGeneratedImagesFlag.style.display = "none"; 
@@ -61,24 +101,24 @@ const showSpinner = () => {
 
 }
 
-const showGeneratedImage = image => {
-    const noGeneratedImagesFlag = document.getElementById("noGeneratedImages")
-    const generationInProcessFlag = document.getElementById("generationInProcess")
-    const imageGeneratedFlag = document.getElementById("imageGenerated")
-    const generatedImageSpinner = document.getElementById("generatedImageSpinner")
-    const serverImage = document.getElementById("serverImage")
+const showGeneratedImage = imageData => {
+    // const noGeneratedImagesFlag   = document.getElementById("noGeneratedImages")
+    // const generationInProcessFlag = document.getElementById("generationInProcess")
+    // const imageGeneratedFlag      = document.getElementById("imageGenerated")
+    // const generatedImageSpinner   = document.getElementById("generatedImageSpinner")
+    // const serverImage             = document.getElementById("serverImage")
 
-    // Hide unnecessary flags
-    noGeneratedImagesFlag.style.display   = "none"; 
-    generationInProcessFlag.style.display = "none"; 
-    generatedImageSpinner.style.display   = "none";
+    // // Hide unnecessary flags
+    // noGeneratedImagesFlag.style.display   = "none"; 
+    // generationInProcessFlag.style.display = "none"; 
+    // generatedImageSpinner.style.display   = "none";
 
-    // Show actual blocks
-    imageGeneratedFlag.style.display = "block";
-    serverImage.style.display        = "block";
+    // // Show actual blocks
+    // imageGeneratedFlag.style.display = "block";
+    // serverImage.style.display        = "block";
 
-    // Load image
-    let reader = new FileReader();
-    reader.onload = e => { serverImage.src = e.target.result }
-    reader.readAsDataURL(image);
+    
+    // const imageUrl = URL.createObjectURL(imageData);
+    // serverImage.src = imageUrl;
+    // console.log(imageUrl)
 }
